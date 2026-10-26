@@ -129,10 +129,10 @@ class BlockchainLikeRegistry:
             VALUES (?, ?, ?, ?, ?)
         ''', (timestamp, threat_name, file_path, threat_level, ai_detected))
 
-        self.log_event('ATTACK_DETECTED', threat_level, threat_name, file_path, ai_detected)
-
         conn.commit()
         conn.close()
+
+        self.log_event('ATTACK_DETECTED', threat_level, threat_name, file_path, ai_detected)
 
     def log_defense(self, action, target_file, success=True):
         """Registra una acción de defensa"""
