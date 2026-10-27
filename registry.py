@@ -129,10 +129,10 @@ class BlockchainLikeRegistry:
             VALUES (?, ?, ?, ?, ?)
         ''', (timestamp, threat_name, file_path, threat_level, ai_detected))
 
-        self.log_event('ATTACK_DETECTED', threat_level, threat_name, file_path, ai_detected)
-
         conn.commit()
         conn.close()
+
+        self.log_event('ATTACK_DETECTED', threat_level, threat_name, file_path, ai_detected)
 
     def log_defense(self, action, target_file, success=True):
         """Registra una acción de defensa"""
@@ -224,3 +224,75 @@ class BlockchainLikeRegistry:
 
         conn.close()
         return True, "Blockchain íntegro"
+
+
+    # --- Métodos para cuarentena y contraguarda ---
+    def log_quarantine(self, file_path, quarantine_path):
+        """Registra un archivo en cuarentena"""
+        self.log_event('QUARANTINE', action_taken=f'Moved to {quarantine_path}')
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO defenses (timestamp, action, target_file, success) VALUES (?, ?, ?, ?)',
+                       (datetime.now().isoformat(), 'QUARANTINE', file_path, True))
+        conn.commit()
+        conn.close()
+
+    def log_quarantine_error(self, file_path, error):
+        """Registra error al cuarentenar"""
+        self.log_event('QUARANTINE_ERROR', action_taken=f'Error: {error}')
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO defenses (timestamp, action, target_file, success) VALUES (?, ?, ?, ?)',
+                       (datetime.now().isoformat(), 'QUARANTINE_ERROR', file_path, False))
+        conn.commit()
+        conn.close()
+
+    def log_quarantine_deletion(self, file_path):
+        """Registra eliminación de archivo en cuarentena"""
+        self.log_event('QUARANTINE_DELETE', action_taken='Deleted from quarantine')
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO defenses (timestamp, action, target_file, success) VALUES (?, ?, ?, ?)',
+                       (datetime.now().isoformat(), 'DELETE', file_path, True))
+        conn.commit()
+        conn.close()
+
+    def log_quarantine_deletion_error(self, file_path, error):
+        """Registra error al eliminar de cuarentena"""
+        self.log_event('QUARANTINE_DELETE_ERROR', action_taken=f'Error: {error}')
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO defenses (timestamp, action, target_file, success) VALUES (?, ?, ?, ?)',
+                       (datetime.now().isoformat(), 'DELETE_ERROR', file_path, False))
+        conn.commit()
+        conn.close()
+
+    def log_counter_attack(self, attacker_info):
+        """Registra un contraataque"""
+        self.log_event('COUNTER_ATTACK', action_taken=str(attacker_info))
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO defenses (timestamp, action, target_file, success) VALUES (?, ?, ?, ?)',
+                       (datetime.now().isoformat(), 'COUNTER_ATTACK', str(attacker_info), True))
+        conn.commit()
+        conn.close()
+
+    def log_attacker_localized(self, result):
+        """Registra localización exitosa de atacante"""
+        self.log_event('ATTACKER_LOCALIZED', action_taken=str(result))
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO defenses (timestamp, action, target_file, success) VALUES (?, ?, ?, ?)',
+                       (datetime.now().isoformat(), 'LOCALIZED', str(result), True))
+        conn.commit()
+        conn.close()
+
+    def log_attacker_not_localized(self, result):
+        """Registra fallo en localización de atacante"""
+        self.log_event('ATTACKER_NOT_LOCALIZED', action_taken=str(result))
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO defenses (timestamp, action, target_file, success) VALUES (?, ?, ?, ?)',
+                       (datetime.now().isoformat(), 'NOT_LOCALIZED', str(result), False))
+        conn.commit()
+        conn.close()
