@@ -1,0 +1,58 @@
+@echo off
+setlocal EnableDelayedExpansion
+chcp 65001 >nul
+cd /d "%~dp0"
+
+echo ==============================================
+echo ^| ^|  CyberShield IA v3.0 - Iniciando...
+echo ==============================================
+echo.
+
+:: ---- 1) verificar Python ----
+where python >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo [!] Python NO detectado en el PATH.
+    echo     Descarga e instala desde https://www.python.org/downloads/
+    echo     Asegurate de marcar "Add Python to PATH" (o ponelo manualmente).
+    pause
+    exit /b 1
+)
+for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYV=%%i
+echo [+] Python detectado: %PYV%
+
+:: ---- 2) tkinter ----
+python -c "import tkinter" >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo [!] tkinter NOT disponible.
+    echo     Reinstala Python y en "Customize installation" selecciona "tcl/tk and IDLE".
+    pause
+    exit /b 1
+)
+echo [+] tkinter: OK
+
+:: ---- 3) sqlite3 ----
+python -c "import sqlite3" >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo [!] sqlite3 NOT disponible.
+    pause
+    exit /b 1
+)
+echo [+] sqlite3: OK
+
+:: ---- 4) carpeta de datos ----
+if not exist "cybershield_datos" mkdir cybershield_datos
+echo [+] Datos listos: cybershield_datos
+
+echo.
+echo Iniciando interfaz...
+echo.
+
+:: ---- 5) correr en consola (no pythonw) para ver errores ----
+py -3 main.pyw
+
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [!] La aplicación cerró con error (código %ERRORLEVEL%).
+    echo     Revisa esta misma ventana para ver el mensaje exacto.
+    pause
+)
